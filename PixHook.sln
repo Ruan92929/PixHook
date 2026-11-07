@@ -1,0 +1,64 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{DDECFC7D-B82D-48CA-90D1-24B9264D6770}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PixHook.Api", "src\PixHook.Api\PixHook.Api.csproj", "{89CA23FE-2BE6-4F34-A15F-517D9B48B9E1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PixHook.Application", "src\PixHook.Application\PixHook.Application.csproj", "{105776D0-5627-43CC-9280-1DD998DEC9B8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PixHook.Domain", "src\PixHook.Domain\PixHook.Domain.csproj", "{A8A39216-471A-49D0-971E-6128BE0838C1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PixHook.Infrastructure", "src\PixHook.Infrastructure\PixHook.Infrastructure.csproj", "{18A89ED5-DEC1-47CD-A9C4-16398F314346}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{AED75D1C-C2C6-484A-8C44-EF6A5E7E384F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PixHook.Tests.Integration", "tests\PixHook.Tests.Integration\PixHook.Tests.Integration.csproj", "{C883541F-09D6-46B8-97B1-4B1060D67BC7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PixHook.Tests.Unit", "tests\PixHook.Tests.Unit\PixHook.Tests.Unit.csproj", "{F98D1E26-F960-438E-9968-98E399B49BDA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{89CA23FE-2BE6-4F34-A15F-517D9B48B9E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89CA23FE-2BE6-4F34-A15F-517D9B48B9E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89CA23FE-2BE6-4F34-A15F-517D9B48B9E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89CA23FE-2BE6-4F34-A15F-517D9B48B9E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{105776D0-5627-43CC-9280-1DD998DEC9B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{105776D0-5627-43CC-9280-1DD998DEC9B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{105776D0-5627-43CC-9280-1DD998DEC9B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{105776D0-5627-43CC-9280-1DD998DEC9B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8A39216-471A-49D0-971E-6128BE0838C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8A39216-471A-49D0-971E-6128BE0838C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8A39216-471A-49D0-971E-6128BE0838C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8A39216-471A-49D0-971E-6128BE0838C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18A89ED5-DEC1-47CD-A9C4-16398F314346}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18A89ED5-DEC1-47CD-A9C4-16398F314346}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18A89ED5-DEC1-47CD-A9C4-16398F314346}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18A89ED5-DEC1-47CD-A9C4-16398F314346}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C883541F-09D6-46B8-97B1-4B1060D67BC7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C883541F-09D6-46B8-97B1-4B1060D67BC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C883541F-09D6-46B8-97B1-4B1060D67BC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C883541F-09D6-46B8-97B1-4B1060D67BC7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F98D1E26-F960-438E-9968-98E399B49BDA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F98D1E26-F960-438E-9968-98E399B49BDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F98D1E26-F960-438E-9968-98E399B49BDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F98D1E26-F960-438E-9968-98E399B49BDA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{89CA23FE-2BE6-4F34-A15F-517D9B48B9E1} = {DDECFC7D-B82D-48CA-90D1-24B9264D6770}
+		{105776D0-5627-43CC-9280-1DD998DEC9B8} = {DDECFC7D-B82D-48CA-90D1-24B9264D6770}
+		{A8A39216-471A-49D0-971E-6128BE0838C1} = {DDECFC7D-B82D-48CA-90D1-24B9264D6770}
+		{18A89ED5-DEC1-47CD-A9C4-16398F314346} = {DDECFC7D-B82D-48CA-90D1-24B9264D6770}
+		{C883541F-09D6-46B8-97B1-4B1060D67BC7} = {AED75D1C-C2C6-484A-8C44-EF6A5E7E384F}
+		{F98D1E26-F960-438E-9968-98E399B49BDA} = {AED75D1C-C2C6-484A-8C44-EF6A5E7E384F}
+	EndGlobalSection
+EndGlobal
