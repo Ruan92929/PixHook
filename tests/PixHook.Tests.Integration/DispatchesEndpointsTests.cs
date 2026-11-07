@@ -61,8 +61,24 @@ public class DispatchesEndpointsTests : ApiTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var received = Factory.Destination.LogEntries.Single(l => l.RequestMessage.Path == path).RequestMessage;
-        var expected = new MercadoPagoSignatureStrategy().Sign(received.Body!, PixHookApiFactory.MercadoPagoSecret);
-        received.Headers!["x-signature"].Single().Should().Be(expected);
+
+        // A MP não assina o corpo cru: assina o manifest "id:{data.id};request-id:{x-request-id};ts:{ts};".
+        // Por isso recalculamos o manifest a partir do próprio ts/request-id recebidos, em vez de gerar um novo ts.
+        var signatureHeader = received.Headers!["x-signature"].Single();
+        var parts = signatureHeader.Split(',').Select(p => p.Split('=', 2)).ToDictionary(kv => kv[0], kv => kv[1]);
+        parts.Should().ContainKey("ts");
+        parts.Should().ContainKey("v1");
+
+        // Nomes de header HTTP são case-insensitive; o servidor que recebe pode normalizar a grafia
+        // (ex.: "X-Request-Id"), então procuramos sem diferenciar maiúsculas/minúsculas.
+        var requestId = received.Headers!
+            .Single(h => string.Equals(h.Key, "x-request-id", StringComparison.OrdinalIgnoreCase)).Value.Single();
+        using var payload = JsonDocument.Parse(received.Body!);
+        var dataId = payload.RootElement.GetProperty("data").GetProperty("id").GetString();
+        var manifest = $"id:{dataId!.ToLowerInvariant()};request-id:{requestId};ts:{parts["ts"]};";
+        var expectedHex = HmacSha256SignatureStrategy.HmacHex(manifest, PixHookApiFactory.MercadoPagoSecret);
+
+        parts["v1"].Should().Be(expectedHex);
     }
 
     [Fact]

@@ -11,11 +11,18 @@ public sealed class HmacSha256SignatureStrategy : ISignatureStrategy
     public string Key => StrategyKey;
     public string HeaderName => "X-Signature";
 
-    public string Sign(string payload, string secret) => HmacHex(payload, secret);
+    public string Sign(string payload, string secret, IReadOnlyDictionary<string, string> headers) =>
+        HmacHex(payload, secret);
 
     internal static string HmacHex(string payload, string secret)
     {
         var hash = HMACSHA256.HashData(Encoding.UTF8.GetBytes(secret), Encoding.UTF8.GetBytes(payload));
+        return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    internal static string HmacSha1Hex(string payload, string secret)
+    {
+        var hash = HMACSHA1.HashData(Encoding.UTF8.GetBytes(secret), Encoding.UTF8.GetBytes(payload));
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
 }

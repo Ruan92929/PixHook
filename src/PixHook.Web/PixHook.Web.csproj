@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!--
+    Blazor Server (Razor Components com render mode interativo no servidor) — só dá uma interface
+    simples ao PixHook, consumindo a API por HTTP (ApiBaseUrl no appsettings). Sem pacotes NuGet
+    além do que o próprio SDK Web traz, então não depende de restore para compilar.
+  -->
+</Project>

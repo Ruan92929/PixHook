@@ -65,8 +65,15 @@ internal sealed class HttpWebhookDispatcher : IWebhookDispatcher
         catch (HttpRequestException ex)
         {
             sw.Stop();
+            // Conexão recusada = ninguém está escutando nessa porta. É um erro definitivo
+            // (não transitório), por isso a política de retry (DependencyInjection.IsConnectionRefused)
+            // não insiste nesse caso — a mensagem já deixa isso claro para quem está depurando.
+            var message = DependencyInjection.IsConnectionRefused(ex)
+                ? $"Destino indisponível: conexão recusada. Verifique se há um servidor escutando em {url}."
+                : $"Destino indisponível: {ex.Message}";
+
             _logger.LogWarning(ex, "Destino indisponível: {Url}", url);
-            return DispatchResult.Failure($"Destino indisponível: {ex.Message}", sw.ElapsedMilliseconds);
+            return DispatchResult.Failure(message, sw.ElapsedMilliseconds);
         }
     }
 }

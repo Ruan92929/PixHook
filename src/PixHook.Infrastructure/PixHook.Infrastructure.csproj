@@ -12,4 +12,8 @@
     <ProjectReference Include="..\PixHook.Application\PixHook.Application.csproj" />
     <ProjectReference Include="..\PixHook.Domain\PixHook.Domain.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="PixHook.Tests.Unit" />
+    <InternalsVisibleTo Include="PixHook.Tests.Integration" />
+  </ItemGroup>
 </Project>

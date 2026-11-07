@@ -10,6 +10,8 @@ public class PixHookDbContext : DbContext
     public DbSet<WebhookProvider> Providers => Set<WebhookProvider>();
     public DbSet<WebhookEventTemplate> EventTemplates => Set<WebhookEventTemplate>();
     public DbSet<WebhookDispatch> Dispatches => Set<WebhookDispatch>();
+    public DbSet<DispatchScenario> Scenarios => Set<DispatchScenario>();
+    public DbSet<DispatchScenarioStep> ScenarioSteps => Set<DispatchScenarioStep>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

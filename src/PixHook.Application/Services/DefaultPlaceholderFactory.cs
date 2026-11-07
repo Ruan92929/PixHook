@@ -21,11 +21,18 @@ public sealed class DefaultPlaceholderFactory : IPlaceholderFactory
     {
         var now = _clock.UtcNow;
         var txid = RandomString(32);
+        const decimal valor = 150.00m;
+        const decimal valorOriginal = 150.00m;
+        const decimal valorPago = 149.90m;
         return PlaceholderValues.Empty
             .With("txid", txid)
-            .With("valor", 150.00m)
-            .With("valorOriginal", 150.00m)
-            .With("valorPago", 149.90m)
+            .With("valor", valor)
+            .With("valorOriginal", valorOriginal)
+            .With("valorPago", valorPago)
+            // Alguns provedores (ex.: Pagar.me) expressam o valor em centavos (inteiro), não em reais.
+            .With("valorCentavos", ToCents(valor).ToString(CultureInfo.InvariantCulture))
+            .With("valorOriginalCentavos", ToCents(valorOriginal).ToString(CultureInfo.InvariantCulture))
+            .With("valorPagoCentavos", ToCents(valorPago).ToString(CultureInfo.InvariantCulture))
             .With("dataHora", now)
             .With("dataExpiracao", now.AddHours(-1))
             .With("endToEndId", $"E{RandomDigits(8)}{now:yyyyMMddHHmm}{RandomString(11)}")
@@ -37,6 +44,8 @@ public sealed class DefaultPlaceholderFactory : IPlaceholderFactory
             .With("requestId", Guid.NewGuid().ToString())
             .With("timestamp", now.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture));
     }
+
+    private static long ToCents(decimal reais) => (long)Math.Round(reais * 100m, MidpointRounding.AwayFromZero);
 
     private static string RandomString(int length) =>
         string.Create(length, 0, (span, _) =>

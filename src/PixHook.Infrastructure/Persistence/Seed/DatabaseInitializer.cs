@@ -21,17 +21,30 @@ public static class DatabaseInitializer
     {
         var existingProviders = await db.Providers.Select(p => p.Id).ToListAsync(ct);
         var existingTemplates = await db.EventTemplates.Select(t => t.Id).ToListAsync(ct);
+        var existingScenarios = await db.Scenarios.Select(s => s.Id).ToListAsync(ct);
+        var existingScenarioSteps = await db.ScenarioSteps.Select(s => s.Id).ToListAsync(ct);
 
         var newProviders = SeedData.Providers().Where(p => !existingProviders.Contains(p.Id)).ToList();
         var newTemplates = SeedData.Templates().Where(t => !existingTemplates.Contains(t.Id)).ToList();
+        var newScenarios = SeedData.Scenarios().Where(s => !existingScenarios.Contains(s.Id)).ToList();
+        var newScenarioSteps = SeedData.ScenarioSteps().Where(s => !existingScenarioSteps.Contains(s.Id)).ToList();
 
-        if (newProviders.Count == 0 && newTemplates.Count == 0) return;
+        if (newProviders.Count == 0 && newTemplates.Count == 0 && newScenarios.Count == 0 && newScenarioSteps.Count == 0)
+            return;
 
         db.Providers.AddRange(newProviders);
         db.EventTemplates.AddRange(newTemplates);
+        // Templates precisam existir antes dos passos de cenário (FK ScenarioSteps.TemplateId).
         await db.SaveChangesAsync(ct);
 
-        logger.LogInformation("Seed aplicado: {Providers} provedor(es), {Templates} template(s).",
-            newProviders.Count, newTemplates.Count);
+        db.Scenarios.AddRange(newScenarios);
+        await db.SaveChangesAsync(ct);
+
+        db.ScenarioSteps.AddRange(newScenarioSteps);
+        await db.SaveChangesAsync(ct);
+
+        logger.LogInformation(
+            "Seed aplicado: {Providers} provedor(es), {Templates} template(s), {Scenarios} cenário(s), {Steps} passo(s) de cenário.",
+            newProviders.Count, newTemplates.Count, newScenarios.Count, newScenarioSteps.Count);
     }
 }

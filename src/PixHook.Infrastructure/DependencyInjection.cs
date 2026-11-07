@@ -1,10 +1,10 @@
 using System.Net;
+using System.Net.Sockets;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Polly;
-using Polly.Extensions.Http;
 using PixHook.Application.Abstractions;
 using PixHook.Domain.Repositories;
 using PixHook.Infrastructure.Dispatching;
@@ -26,11 +26,13 @@ public static class DependencyInjection
 
         services.AddScoped<IProviderRepository, ProviderRepository>();
         services.AddScoped<IDispatchRepository, DispatchRepository>();
+        services.AddScoped<IScenarioRepository, ScenarioRepository>();
 
         services.AddSingleton<IClock, SystemClock>();
 
         services.AddSingleton<ISignatureStrategy, HmacSha256SignatureStrategy>();
         services.AddSingleton<ISignatureStrategy, MercadoPagoSignatureStrategy>();
+        services.AddSingleton<ISignatureStrategy, PagarmeSignatureStrategy>();
         services.AddSingleton<ISignatureStrategyResolver, SignatureStrategyResolver>();
         services.AddSingleton<IWebhookSecretProvider, ConfigurationWebhookSecretProvider>();
 
@@ -42,10 +44,15 @@ public static class DependencyInjection
             .AddPolicyHandler((sp, _) =>
             {
                 var opts = sp.GetRequiredService<IOptions<DispatcherOptions>>().Value;
-                return HttpPolicyExtensions
-                    .HandleTransientHttpError()
+                // Importante: conexão recusada (ninguém escutando na porta) NÃO é retentada.
+                // É um erro definitivo e imediato ("o destino está fora do ar"), diferente de um
+                // 5xx ou timeout, que podem ser transitórios. Tentar de novo aqui só atrasaria a
+                // resposta sem chance de sucesso.
+                return Policy<HttpResponseMessage>
+                    .Handle<HttpRequestException>(ex => !IsConnectionRefused(ex))
                     .Or<Polly.Timeout.TimeoutRejectedException>()
-                    .OrResult(r => r.StatusCode == HttpStatusCode.TooManyRequests)
+                    .OrResult(r => (int)r.StatusCode >= 500 || r.StatusCode == HttpStatusCode.RequestTimeout ||
+                                   r.StatusCode == HttpStatusCode.TooManyRequests)
                     .WaitAndRetryAsync(opts.RetryCount, attempt => TimeSpan.FromMilliseconds(200 * Math.Pow(2, attempt - 1)));
             })
             .AddPolicyHandler((sp, _) =>
@@ -56,4 +63,7 @@ public static class DependencyInjection
 
         return services;
     }
+
+    internal static bool IsConnectionRefused(HttpRequestException ex) =>
+        ex.InnerException is SocketException { SocketErrorCode: SocketError.ConnectionRefused };
 }

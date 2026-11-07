@@ -69,6 +69,34 @@ namespace PixHook.Infrastructure.Persistence.Migrations
                     b.ToTable("Providers");
                 });
 
+            modelBuilder.Entity("PixHook.Domain.Entities.DispatchScenario", b =>
+                {
+                    b.Property<Guid>("Id").HasColumnType("TEXT");
+                    b.Property<string>("Description").IsRequired().HasMaxLength(1000).HasColumnType("TEXT");
+                    b.Property<bool>("IsActive").HasColumnType("INTEGER");
+                    b.Property<string>("Name").IsRequired().HasMaxLength(150).HasColumnType("TEXT");
+                    b.Property<string>("Slug").IsRequired().HasMaxLength(150).HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+                    b.HasIndex("Slug").IsUnique().HasDatabaseName("IX_Scenarios_Slug");
+                    b.ToTable("Scenarios");
+                });
+
+            modelBuilder.Entity("PixHook.Domain.Entities.DispatchScenarioStep", b =>
+                {
+                    b.Property<Guid>("Id").HasColumnType("TEXT");
+                    b.Property<int>("DelayBeforeMs").HasColumnType("INTEGER");
+                    b.Property<string>("Note").IsRequired().HasMaxLength(300).HasColumnType("TEXT");
+                    b.Property<int>("Order").HasColumnType("INTEGER");
+                    b.Property<Guid>("ScenarioId").HasColumnType("TEXT");
+                    b.Property<Guid>("TemplateId").HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+                    b.HasIndex("ScenarioId").HasDatabaseName("IX_ScenarioSteps_ScenarioId");
+                    b.HasIndex("TemplateId").HasDatabaseName("IX_ScenarioSteps_TemplateId");
+                    b.ToTable("ScenarioSteps");
+                });
+
             modelBuilder.Entity("PixHook.Domain.Entities.WebhookDispatch", b =>
                 {
                     b.HasOne("PixHook.Domain.Entities.WebhookDispatch", "ReplayOf")
@@ -100,6 +128,29 @@ namespace PixHook.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("PixHook.Domain.Entities.WebhookProvider", b =>
                 {
                     b.Navigation("Templates");
+                });
+
+            modelBuilder.Entity("PixHook.Domain.Entities.DispatchScenarioStep", b =>
+                {
+                    b.HasOne("PixHook.Domain.Entities.DispatchScenario", "Scenario")
+                        .WithMany("Steps")
+                        .HasForeignKey("ScenarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PixHook.Domain.Entities.WebhookEventTemplate", "Template")
+                        .WithMany()
+                        .HasForeignKey("TemplateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Scenario");
+                    b.Navigation("Template");
+                });
+
+            modelBuilder.Entity("PixHook.Domain.Entities.DispatchScenario", b =>
+                {
+                    b.Navigation("Steps");
                 });
 #pragma warning restore 612, 618
         }

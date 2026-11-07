@@ -1,0 +1,267 @@
+@page "/"
+@rendermode InteractiveServer
+@inject PixHookApiClient Api
+
+<h1>PixHook</h1>
+<p class="muted">Escolha um provedor e um evento, aponte para a sua URL local e dispare.</p>
+
+@if (GlobalError is not null)
+{
+    <div class="error-banner">@GlobalError</div>
+}
+
+<section class="panel">
+    <h2>Disparar webhook</h2>
+
+    <label>Provedor</label>
+    <select @bind="SelectedProviderId" @bind:after="OnProviderChangedAsync">
+        <option value="">— selecione —</option>
+        @foreach (var p in Providers)
+        {
+            <option value="@p.Id">@p.Name</option>
+        }
+    </select>
+
+    <label>Evento</label>
+    <select @bind="SelectedTemplateId" disabled="@(Events.Count == 0)">
+        <option value="">— selecione —</option>
+        @foreach (var e in Events)
+        {
+            <option value="@e.Id">@e.Name (@e.EventType)</option>
+        }
+    </select>
+
+    <label>URL de destino</label>
+    <input type="text" @bind="DestinationUrl" placeholder="http://localhost:5000/webhooks/pix" />
+
+    <label>Overrides de payload (opcional — uma linha "chave=valor" por linha, ex.: valor=249.90)</label>
+    <textarea @bind="OverridesText" placeholder="valor=249.90&#10;txid=meutxid123"></textarea>
+
+    <button @onclick="DispatchAsync" disabled="@(Dispatching || SelectedTemplateId is null or "" || string.IsNullOrWhiteSpace(DestinationUrl))">
+        @(Dispatching ? "Disparando…" : "Disparar")
+    </button>
+
+    @if (LastDispatchError is not null)
+    {
+        <div class="result-box"><span class="fail">Erro:</span> @LastDispatchError</div>
+    }
+    else if (LastDispatch is not null)
+    {
+        <div class="result-box">
+            <strong class="@(LastDispatch.Success ? "ok" : "fail")">
+                @(LastDispatch.Success ? "Sucesso" : "Falhou")
+            </strong>
+            — status @(LastDispatch.ResponseStatusCode?.ToString() ?? "—"), @LastDispatch.ResponseTimeMs ms
+            @if (!string.IsNullOrEmpty(LastDispatch.ErrorMessage))
+            {
+                <div>@LastDispatch.ErrorMessage</div>
+            }
+            <pre>@LastDispatch.RenderedPayload</pre>
+        </div>
+    }
+</section>
+
+<section class="panel">
+    <h2>Histórico</h2>
+    <button class="secondary" @onclick="() => LoadHistoryAsync(1)">Atualizar</button>
+
+    @if (History.Items.Count == 0)
+    {
+        <p class="muted">Nenhum disparo ainda.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Quando</th><th>Provedor / Evento</th><th>Destino</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var d in History.Items)
+                {
+                    <tr>
+                        <td>@d.RequestedAt.ToLocalTime().ToString("HH:mm:ss")</td>
+                        <td>@d.ProviderName / @d.TemplateName @(d.ReplayOfDispatchId is not null ? " (replay)" : "")</td>
+                        <td>@d.DestinationUrl</td>
+                        <td class="@(d.Success ? "ok" : "fail")">@(d.Success ? "ok" : "falhou") (@(d.ResponseStatusCode?.ToString() ?? "—"))</td>
+                        <td><button class="secondary" @onclick="() => ReplayAsync(d.Id)">Replay</button></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div style="margin-top:0.75rem; display:flex; gap:0.5rem; align-items:center;">
+            <button class="secondary" disabled="@(!History.HasPreviousPage)" @onclick="() => LoadHistoryAsync(History.Page - 1)">« Anterior</button>
+            <span class="muted">página @History.Page de @(Math.Max(History.TotalPages, 1))</span>
+            <button class="secondary" disabled="@(!History.HasNextPage)" @onclick="() => LoadHistoryAsync(History.Page + 1)">Próxima »</button>
+        </div>
+    }
+</section>
+
+<section class="panel">
+    <h2>Cenários</h2>
+    <p class="muted">Sequências de eventos (com atraso entre eles) para testar casos como webhook duplicado ou fora de ordem.</p>
+
+    @if (Scenarios.Count == 0)
+    {
+        <p class="muted">Nenhum cenário carregado.</p>
+    }
+    else
+    {
+        @foreach (var s in Scenarios)
+        {
+            <div style="margin-bottom:1rem;">
+                <strong>@s.Name</strong> <span class="muted">(@s.Steps.Count passo(s))</span>
+                <div class="muted">@s.Description</div>
+                <button class="secondary" style="margin-top:0.4rem;"
+                        disabled="@(RunningScenarioId == s.Id || string.IsNullOrWhiteSpace(DestinationUrl))"
+                        @onclick="() => RunScenarioAsync(s.Id)">
+                    @(RunningScenarioId == s.Id ? "Executando…" : "Executar para a URL de destino acima")
+                </button>
+            </div>
+        }
+    }
+
+    @if (LastScenarioError is not null)
+    {
+        <div class="result-box"><span class="fail">Erro:</span> @LastScenarioError</div>
+    }
+    else if (LastScenarioRun is not null)
+    {
+        <div class="result-box">
+            <strong>@LastScenarioRun.ScenarioName</strong> —
+            @((LastScenarioRun.FinishedAt - LastScenarioRun.StartedAt).TotalSeconds.ToString("0.0")) s no total
+            <table style="margin-top:0.5rem;">
+                <thead><tr><th>#</th><th>O que simula</th><th>Atraso</th><th>Resultado</th></tr></thead>
+                <tbody>
+                    @foreach (var step in LastScenarioRun.Steps)
+                    {
+                        <tr>
+                            <td>@step.Order</td>
+                            <td>@step.Note</td>
+                            <td>@step.DelayAppliedMs ms</td>
+                            <td class="@(step.Dispatch.Success ? "ok" : "fail")">
+                                @(step.Dispatch.Success ? "ok" : "falhou") (@(step.Dispatch.ResponseStatusCode?.ToString() ?? "—"))
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+@code {
+    private List<ProviderDto> Providers { get; set; } = new();
+    private List<EventTemplateDto> Events { get; set; } = new();
+    private List<ScenarioDto> Scenarios { get; set; } = new();
+    private PagedResult<DispatchSummaryDto> History { get; set; } = new(new(), 1, 20, 0, 0, false, false);
+
+    private string SelectedProviderId { get; set; } = "";
+    private string SelectedTemplateId { get; set; } = "";
+    private string DestinationUrl { get; set; } = "http://localhost:5000/webhooks/pix";
+    private string OverridesText { get; set; } = "";
+
+    private bool Dispatching { get; set; }
+    private DispatchDto? LastDispatch { get; set; }
+    private string? LastDispatchError { get; set; }
+
+    private Guid? RunningScenarioId { get; set; }
+    private ScenarioRunResultDto? LastScenarioRun { get; set; }
+    private string? LastScenarioError { get; set; }
+
+    private string? GlobalError { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Providers = await Api.GetProvidersAsync();
+            Scenarios = await Api.GetScenariosAsync();
+            await LoadHistoryAsync(1);
+        }
+        catch (Exception ex)
+        {
+            GlobalError = $"Não consegui falar com a API do PixHook ({ex.Message}). Ela está rodando? Veja a URL configurada em appsettings.json (ApiBaseUrl).";
+        }
+    }
+
+    private async Task OnProviderChangedAsync()
+    {
+        Events = new();
+        SelectedTemplateId = "";
+        if (Guid.TryParse(SelectedProviderId, out var providerId))
+            Events = await Api.GetProviderEventsAsync(providerId);
+    }
+
+    private async Task LoadHistoryAsync(int page)
+    {
+        if (page < 1) return;
+        History = await Api.GetHistoryAsync(page, History.PageSize);
+    }
+
+    private Dictionary<string, string>? ParseOverrides()
+    {
+        var lines = OverridesText.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var dict = new Dictionary<string, string>();
+        foreach (var line in lines)
+        {
+            var idx = line.IndexOf('=');
+            if (idx <= 0) continue;
+            dict[line[..idx].Trim()] = line[(idx + 1)..].Trim();
+        }
+        return dict.Count > 0 ? dict : null;
+    }
+
+    private async Task DispatchAsync()
+    {
+        if (!Guid.TryParse(SelectedTemplateId, out var templateId)) return;
+
+        Dispatching = true;
+        LastDispatchError = null;
+        LastDispatch = null;
+        try
+        {
+            var result = await Api.DispatchAsync(templateId, DestinationUrl, ParseOverrides(), null);
+            if (result.IsSuccess) LastDispatch = result.Value;
+            else LastDispatchError = result.ErrorMessage;
+            await LoadHistoryAsync(1);
+        }
+        finally
+        {
+            Dispatching = false;
+        }
+    }
+
+    private async Task ReplayAsync(Guid dispatchId)
+    {
+        var result = await Api.ReplayAsync(dispatchId);
+        if (result.IsSuccess)
+        {
+            LastDispatch = result.Value;
+            LastDispatchError = null;
+        }
+        else
+        {
+            LastDispatchError = result.ErrorMessage;
+        }
+        await LoadHistoryAsync(1);
+    }
+
+    private async Task RunScenarioAsync(Guid scenarioId)
+    {
+        RunningScenarioId = scenarioId;
+        LastScenarioError = null;
+        LastScenarioRun = null;
+        try
+        {
+            var result = await Api.RunScenarioAsync(scenarioId, DestinationUrl);
+            if (result.IsSuccess) LastScenarioRun = result.Value;
+            else LastScenarioError = result.ErrorMessage;
+            await LoadHistoryAsync(1);
+        }
+        finally
+        {
+            RunningScenarioId = null;
+        }
+    }
+}

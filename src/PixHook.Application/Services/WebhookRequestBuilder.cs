@@ -82,7 +82,7 @@ public sealed class WebhookRequestBuilder : IWebhookRequestBuilder
                     $"Estratégia de assinatura '{template.SignatureStrategyKey}' não registrada.");
 
             var secret = _secretProvider.GetSecret(strategy.Key);
-            headers[strategy.HeaderName] = strategy.Sign(payload.Content, secret);
+            headers[strategy.HeaderName] = strategy.Sign(payload.Content, secret, headers);
         }
 
         return new BuiltWebhookRequest(payload.Content, headers);

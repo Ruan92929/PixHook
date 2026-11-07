@@ -108,7 +108,7 @@ public class DispatchWebhookCommandHandlerTests
         var strategy = Substitute.For<ISignatureStrategy>();
         strategy.Key.Returns("fake");
         strategy.HeaderName.Returns("X-Fake-Signature");
-        strategy.Sign(Arg.Any<string>(), "secret").Returns("assinado");
+        strategy.Sign(Arg.Any<string>(), "secret", Arg.Any<IReadOnlyDictionary<string, string>>()).Returns("assinado");
         _resolver.Resolve("fake").Returns(strategy);
 
         var template = TestData.Template(signatureKey: "fake");

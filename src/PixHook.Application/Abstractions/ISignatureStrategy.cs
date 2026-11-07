@@ -12,7 +12,12 @@ public interface ISignatureStrategy
     /// <summary>Nome do header HTTP onde a assinatura é enviada.</summary>
     string HeaderName { get; }
 
-    string Sign(string payload, string secret);
+    /// <summary>
+    /// Calcula o valor do header de assinatura. <paramref name="headers"/> traz os demais headers já
+    /// renderizados do template (ex.: x-request-id), necessários para esquemas cujo "manifest" assinado
+    /// não é o corpo cru (caso do Mercado Pago).
+    /// </summary>
+    string Sign(string payload, string secret, IReadOnlyDictionary<string, string> headers);
 }
 
 public interface ISignatureStrategyResolver

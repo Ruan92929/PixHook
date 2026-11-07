@@ -6,6 +6,9 @@ namespace PixHook.Api.Extensions;
 /// <summary>Converte <see cref="Error"/> do Result Pattern em respostas ProblemDetails (RFC 7807).</summary>
 public static class ResultExtensions
 {
+    private static readonly System.Text.Json.JsonSerializerOptions ProblemJsonOptions =
+        new(System.Text.Json.JsonSerializerDefaults.Web);
+
     public static IActionResult ToProblem(this ControllerBase controller, Error error)
     {
         var status = error.Type switch
@@ -36,6 +39,12 @@ public static class ResultExtensions
         problem.Extensions["code"] = error.Code;
         problem.Extensions["traceId"] = controller.HttpContext.TraceIdentifier;
 
-        return new ObjectResult(problem) { StatusCode = status, ContentTypes = { "application/problem+json" } };
+        // JsonResult (e não ObjectResult) para que o [Produces("application/json")] dos controllers
+        // não sobrescreva o Content-Type exigido pela RFC 7807.
+        return new JsonResult(problem, ProblemJsonOptions)
+        {
+            StatusCode = status,
+            ContentType = "application/problem+json"
+        };
     }
 }
